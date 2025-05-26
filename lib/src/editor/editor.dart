@@ -646,6 +646,7 @@ class _QuillEditorSelectionGestureDetectorBuilder
   void _showMagnifierIfSupportedByPlatform(Offset positionToShow) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.iOS:
         editor?.showMagnifier(positionToShow);
       default:
@@ -655,6 +656,7 @@ class _QuillEditorSelectionGestureDetectorBuilder
   void _hideMagnifierIfSupportedByPlatform() {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.iOS:
         editor?.hideMagnifier();
       default:

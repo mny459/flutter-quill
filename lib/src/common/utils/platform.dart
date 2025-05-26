@@ -8,7 +8,9 @@ import 'package:quill_native_bridge/quill_native_bridge.dart';
 // Android
 
 @pragma('vm:platform-const-if', !kDebugMode)
-bool get isAndroid => defaultTargetPlatform == TargetPlatform.android;
+bool get isAndroid =>
+    defaultTargetPlatform == TargetPlatform.android ||
+    defaultTargetPlatform == TargetPlatform.ohos;
 
 @pragma('vm:platform-const-if', !kDebugMode)
 bool get isAndroidApp => !kIsWeb && isAndroid;
@@ -34,6 +36,7 @@ Future<bool> isIOSSimulator() async {
 @pragma('vm:platform-const-if', !kDebugMode)
 bool get isMobile =>
     defaultTargetPlatform == TargetPlatform.iOS ||
+    defaultTargetPlatform == TargetPlatform.ohos ||
     defaultTargetPlatform == TargetPlatform.android;
 
 @pragma('vm:platform-const-if', !kDebugMode)
@@ -76,6 +79,7 @@ bool get isKeyboardOS =>
 
 extension PlatformThemeCheckExtension on ThemeData {
   bool get isMaterial => !isCupertino;
+
   bool get isCupertino =>
       {TargetPlatform.iOS, TargetPlatform.macOS}.contains(platform);
 }

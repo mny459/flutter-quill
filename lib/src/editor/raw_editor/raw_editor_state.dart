@@ -339,6 +339,7 @@ class QuillRawEditorState extends EditorState
     /// and mobile browsers.
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.iOS:
       case TargetPlatform.fuchsia:
         // On mobile platforms, we don't unfocus on touch events unless they're

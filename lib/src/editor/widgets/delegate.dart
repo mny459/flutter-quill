@@ -268,6 +268,7 @@ class EditorTextSelectionGestureDetectorBuilder {
         _isShiftPressed && renderEditor?.selection.baseOffset != null;
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
         editor?.hideToolbar(false);
       case TargetPlatform.iOS:
@@ -488,6 +489,7 @@ class EditorTextSelectionGestureDetectorBuilder {
           editor?.showToolbar();
         }
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
       case TargetPlatform.windows:
@@ -624,6 +626,7 @@ class EditorTextSelectionGestureDetectorBuilder {
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
       case TargetPlatform.iOS:
       case TargetPlatform.macOS:
@@ -683,6 +686,7 @@ class EditorTextSelectionGestureDetectorBuilder {
               cause: SelectionChangedCause.drag);
 
         case TargetPlatform.android:
+        case TargetPlatform.ohos:
         case TargetPlatform.fuchsia:
         case TargetPlatform.linux:
         case TargetPlatform.windows:
@@ -717,6 +721,7 @@ class EditorTextSelectionGestureDetectorBuilder {
             case null:
           }
         case TargetPlatform.android:
+        case TargetPlatform.ohos:
         case TargetPlatform.fuchsia:
           switch (details.kind) {
             case PointerDeviceKind.mouse:
@@ -802,6 +807,7 @@ class EditorTextSelectionGestureDetectorBuilder {
           3) {
         switch (defaultTargetPlatform) {
           case TargetPlatform.android:
+          case TargetPlatform.ohos:
           case TargetPlatform.fuchsia:
           case TargetPlatform.iOS:
             switch (updateDetails.kind) {
@@ -877,6 +883,7 @@ class EditorTextSelectionGestureDetectorBuilder {
           }
           return;
         case TargetPlatform.android:
+        case TargetPlatform.ohos:
         case TargetPlatform.fuchsia:
           // With a precise pointer device, such as a mouse, trackpad, or stylus,
           // the drag will select the text spanning the origin of the drag to the end of the drag.

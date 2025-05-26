@@ -384,21 +384,24 @@ class EditorTextSelectionOverlay {
   void _onHandleDragStart(DragStartDetails details, TextPosition position) {
     if (magnifierConfiguration == TextMagnifierConfiguration.disabled) return;
     if (defaultTargetPlatform != TargetPlatform.iOS &&
-        defaultTargetPlatform != TargetPlatform.android) return;
+        defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.ohos) return;
     showMagnifier(position, details.globalPosition, renderObject);
   }
 
   void _onHandleDragUpdate(DragUpdateDetails details, TextPosition position) {
     if (magnifierConfiguration == TextMagnifierConfiguration.disabled) return;
     if (defaultTargetPlatform != TargetPlatform.iOS &&
-        defaultTargetPlatform != TargetPlatform.android) return;
+        defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.ohos) return;
     updateMagnifier(position, details.globalPosition, renderObject);
   }
 
   void _onHandleDragEnd(DragEndDetails details) {
     if (magnifierConfiguration == TextMagnifierConfiguration.disabled) return;
     if (defaultTargetPlatform != TargetPlatform.iOS &&
-        defaultTargetPlatform != TargetPlatform.android) return;
+        defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.ohos) return;
     hideMagnifier();
   }
 
@@ -910,6 +913,7 @@ class EditorTextSelectionGestureDetector extends StatefulWidget {
   static int getEffectiveConsecutiveTapCount(int rawCount) {
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
+      case TargetPlatform.ohos:
       case TargetPlatform.fuchsia:
       case TargetPlatform.linux:
         // From observation, these platform's reset their tap count to 0 when
@@ -1067,6 +1071,7 @@ class _EditorTextSelectionGestureDetectorState
         widget.onDragSelectionEnd != null) {
       switch (defaultTargetPlatform) {
         case TargetPlatform.android:
+        case TargetPlatform.ohos:
         case TargetPlatform.fuchsia:
         case TargetPlatform.iOS:
           gestures[TapAndHorizontalDragGestureRecognizer] =
