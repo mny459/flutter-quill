@@ -21,10 +21,10 @@ Color hexToColor(String? hexString) {
 String colorToHex(Color color) {
   int floatToInt8(double x) => (x * 255.0).round() & 0xff;
 
-  final alpha = floatToInt8(color.a);
-  final red = floatToInt8(color.r);
-  final green = floatToInt8(color.g);
-  final blue = floatToInt8(color.b);
+  final alpha = color.alpha;
+  final red = color.red;
+  final green = color.green;
+  final blue = color.blue;
 
   return '${alpha.toRadixString(16).padLeft(2, '0')}'
           '${red.toRadixString(16).padLeft(2, '0')}'
