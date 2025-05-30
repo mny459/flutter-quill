@@ -57,6 +57,7 @@ Future<LinkMenuAction> defaultLinkActionPickerDelegate(
     case TargetPlatform.iOS:
       return _showCupertinoLinkMenu(context, link);
     case TargetPlatform.android:
+    case TargetPlatform.ohos:
       return _showMaterialMenu(context, link);
     default:
       assert(
@@ -273,7 +274,7 @@ class _MaterialAction extends StatelessWidget {
       leading: Icon(
         icon,
         size: theme.iconTheme.size,
-        color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+        color: theme.colorScheme.onSurface.withOpacity(0.75),
       ),
       title: Text(title),
       onTap: onPressed,

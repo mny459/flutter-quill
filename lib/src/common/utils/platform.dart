@@ -35,6 +35,7 @@ Future<bool> isIOSSimulator() async {
 @pragma('vm:platform-const-if', !kDebugMode)
 bool get isMobile =>
     defaultTargetPlatform == TargetPlatform.iOS ||
+    defaultTargetPlatform == TargetPlatform.ohos ||
     defaultTargetPlatform == TargetPlatform.android;
 
 @pragma('vm:platform-const-if', !kDebugMode)
