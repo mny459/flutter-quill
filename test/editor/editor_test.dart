@@ -83,6 +83,65 @@ void main() {
       expect(latestUri, equals(uri));
     });
 
+    testWidgets('ordered list leading width fits large markers',
+        (tester) async {
+      const markerFontSize = 42.0;
+      const markerPadding = markerFontSize / 2;
+      controller.dispose();
+      controller = QuillController(
+        document: Document.fromJson([
+          {
+            'insert': 'Large item',
+            'attributes': {'size': markerFontSize},
+          },
+          {
+            'insert': '\n',
+            'attributes': {'list': 'ordered'},
+          },
+        ]),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SizedBox(
+            width: 400,
+            child: QuillEditor.basic(
+              controller: controller,
+              config: const QuillEditorConfig(),
+            ),
+          ),
+        ),
+      );
+
+      final markerFinder = find.text('1.');
+      expect(markerFinder, findsOneWidget);
+
+      final marker = tester.widget<Text>(markerFinder);
+      expect(marker.maxLines, 1);
+      expect(marker.softWrap, isFalse);
+      expect(marker.overflow, TextOverflow.visible);
+
+      final markerPainter = TextPainter(
+        maxLines: 1,
+        text: TextSpan(text: '1.', style: marker.style),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final markerContainerFinder = find.byWidgetPredicate((widget) {
+        return widget is Container &&
+            widget.child is Text &&
+            (widget.child! as Text).data == '1.';
+      });
+      final markerContainerWidth = tester.getSize(markerContainerFinder).width;
+
+      expect(
+        markerContainerWidth,
+        greaterThanOrEqualTo(
+          markerPainter.width.ceilToDouble() + markerPadding,
+        ),
+      );
+    });
+
     Widget customBuilder(BuildContext context, QuillRawEditorState state) {
       return AdaptiveTextSelectionToolbar(
         anchors: state.contextMenuAnchors,

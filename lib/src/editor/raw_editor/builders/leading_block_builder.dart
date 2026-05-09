@@ -50,6 +50,18 @@ class LeadingConfig {
 
   String? get getIndexNumberByIndent {
     if (index == null) return null;
+    return resolveIndexNumberByIndent(
+      attrs: attrs,
+      indentLevelCounts: indentLevelCounts,
+      index: index!,
+    );
+  }
+
+  static String resolveIndexNumberByIndent({
+    required Map<String, Attribute> attrs,
+    required Map<int, int> indentLevelCounts,
+    required int index,
+  }) {
     var s = index.toString();
     var level = 0;
     if (!attrs.containsKey(Attribute.indent.key) && indentLevelCounts.isEmpty) {
@@ -82,7 +94,7 @@ class LeadingConfig {
     return s;
   }
 
-  String _toExcelSheetColumnTitle(int n) {
+  static String _toExcelSheetColumnTitle(int n) {
     final result = StringBuffer();
     while (n > 0) {
       n--;
@@ -93,7 +105,7 @@ class LeadingConfig {
     return result.toString().split('').reversed.join();
   }
 
-  String _intToRoman(int input) {
+  static String _intToRoman(int input) {
     var num = input;
 
     if (num < 0) {
