@@ -10,8 +10,12 @@ import 'clipboard_service.dart';
 /// operations.
 @experimental
 class DefaultClipboardService extends ClipboardService {
+  bool get isOhos => defaultTargetPlatform == TargetPlatform.ohos;
   @override
   Future<String?> getHtmlText() async {
+    if (isOhos) {
+      return null;
+    }
     if (!(await QuillNativeProvider.instance
         .isSupported(QuillNativeBridgeFeature.getClipboardHtml))) {
       return null;
@@ -21,6 +25,9 @@ class DefaultClipboardService extends ClipboardService {
 
   @override
   Future<Uint8List?> getImageFile() async {
+    if (isOhos) {
+      return null;
+    }
     if (!(await QuillNativeProvider.instance
         .isSupported(QuillNativeBridgeFeature.getClipboardImage))) {
       return null;
@@ -30,6 +37,9 @@ class DefaultClipboardService extends ClipboardService {
 
   @override
   Future<void> copyImage(Uint8List imageBytes) async {
+    if (isOhos) {
+      return;
+    }
     if (!(await QuillNativeProvider.instance
         .isSupported(QuillNativeBridgeFeature.copyImageToClipboard))) {
       return;
@@ -39,6 +49,9 @@ class DefaultClipboardService extends ClipboardService {
 
   @override
   Future<Uint8List?> getGifFile() async {
+    if (isOhos) {
+      return null;
+    }
     if (!(await QuillNativeProvider.instance
         .isSupported(QuillNativeBridgeFeature.getClipboardGif))) {
       return null;
@@ -47,6 +60,9 @@ class DefaultClipboardService extends ClipboardService {
   }
 
   Future<String?> _getClipboardFile({required String fileExtension}) async {
+    if (isOhos) {
+      return null;
+    }
     if (!(await QuillNativeProvider.instance
         .isSupported(QuillNativeBridgeFeature.getClipboardFiles))) {
       return null;
