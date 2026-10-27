@@ -3,6 +3,7 @@ import 'dart:convert' show jsonDecode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/src/editor/widgets/text/text_line.dart';
 import 'package:flutter_quill/src/l10n/extensions/localizations_ext.dart';
 import 'package:flutter_quill_test/flutter_quill_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -61,21 +62,27 @@ void main() {
 
       const uri =
           'content://com.google.android.inputmethod.latin.fileprovider/test.gif';
-      final messageBytes =
-          const JSONMessageCodec().encodeMessage(<String, dynamic>{
+      final messageBytes = const JSONMessageCodec().encodeMessage(<
+        String,
+        dynamic
+      >{
         'args': <dynamic>[
           -1,
           'TextInputAction.commitContent',
           jsonDecode(
-              '{"mimeType": "image/gif", "data": [0,1,0,1,0,1,0,0,0], "uri": "$uri"}'),
+            '{"mimeType": "image/gif", "data": [0,1,0,1,0,1,0,0,0], "uri": "$uri"}',
+          ),
         ],
         'method': 'TextInputClient.performAction',
       });
 
       Object? error;
       try {
-        await tester.binding.defaultBinaryMessenger
-            .handlePlatformMessage('flutter/textinput', messageBytes, (_) {});
+        await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+          'flutter/textinput',
+          messageBytes,
+          (_) {},
+        );
       } catch (e) {
         error = e;
       }
@@ -83,8 +90,9 @@ void main() {
       expect(latestUri, equals(uri));
     });
 
-    testWidgets('ordered list leading width fits large markers',
-        (tester) async {
+    testWidgets('ordered list leading width fits large markers', (
+      tester,
+    ) async {
       const markerFontSize = 42.0;
       const markerPadding = markerFontSize / 2;
       controller.dispose();
@@ -140,6 +148,41 @@ void main() {
           markerPainter.width.ceilToDouble() + markerPadding,
         ),
       );
+    });
+
+    testWidgets('hiding code block line numbers removes their gutter', (
+      tester,
+    ) async {
+      controller.dispose();
+      controller = QuillController(
+        document: Document.fromJson([
+          {'insert': 'Code'},
+          {
+            'insert': '\n',
+            'attributes': {'code-block': true},
+          },
+        ]),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      Future<double> textLeft({required bool showLineNumbers}) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: QuillEditor.basic(
+              controller: controller,
+              config: QuillEditorConfig(
+                showCodeBlockLineNumbers: showLineNumbers,
+              ),
+            ),
+          ),
+        );
+        return tester.getTopLeft(find.byType(TextLine)).dx;
+      }
+
+      final withLineNumbers = await textLeft(showLineNumbers: true);
+      final withoutLineNumbers = await textLeft(showLineNumbers: false);
+
+      expect(withoutLineNumbers, lessThan(withLineNumbers));
     });
 
     Widget customBuilder(BuildContext context, QuillRawEditorState state) {
@@ -219,9 +262,7 @@ void main() {
         final exception = tester.takeException();
         expect(
           exception,
-          isNot(
-            isInstanceOf<MissingFlutterQuillLocalizationException>(),
-          ),
+          isNot(isInstanceOf<MissingFlutterQuillLocalizationException>()),
         );
 
         expect(exception, isNull);
@@ -233,19 +274,14 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Builder(
-              builder: (context) => Text(context.loc.font),
-            ),
+            home: Builder(builder: (context) => Text(context.loc.font)),
           ),
         );
 
         final exception = tester.takeException();
 
         expect(exception, isNotNull);
-        expect(
-          exception,
-          isA<MissingFlutterQuillLocalizationException>(),
-        );
+        expect(exception, isA<MissingFlutterQuillLocalizationException>());
       },
     );
 
@@ -256,9 +292,7 @@ void main() {
           MaterialApp(
             localizationsDelegates:
                 FlutterQuillLocalizations.localizationsDelegates,
-            home: Builder(
-              builder: (context) => Text(context.loc.font),
-            ),
+            home: Builder(builder: (context) => Text(context.loc.font)),
           ),
         );
 
@@ -273,23 +307,81 @@ void main() {
     );
 
     testWidgets(
+      'transformLink replaces the default prefix logic when launching a link',
+      (tester) async {
+        controller
+          ..document.insert(0, 'example.com')
+          ..formatText(
+            0,
+            'example.com'.length,
+            const LinkAttribute('example.com'),
+          )
+          ..readOnly = true;
+
+        String? launched;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: QuillEditor.basic(
+              controller: controller,
+              config: QuillEditorConfig(
+                onLaunchUrl: (url) => launched = url,
+                transformLink: (link) => 'custom://$link',
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await tester.tapOnText(find.textRange.ofSubstring('example.com'));
+        await tester.pump();
+
+        expect(launched, 'custom://example.com');
+      },
+    );
+
+    testWidgets(
+      'when transformLink is null the default https:// prefix is added',
+      (tester) async {
+        controller
+          ..document.insert(0, 'example.com')
+          ..formatText(
+            0,
+            'example.com'.length,
+            const LinkAttribute('example.com'),
+          )
+          ..readOnly = true;
+
+        String? launched;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: QuillEditor.basic(
+              controller: controller,
+              config: QuillEditorConfig(onLaunchUrl: (url) => launched = url),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        await tester.tapOnText(find.textRange.ofSubstring('example.com'));
+        await tester.pump();
+
+        expect(launched, 'https://example.com');
+      },
+    );
+
+    testWidgets(
       'should throw MissingFlutterQuillLocalizationException if the delegate is not provided',
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            home: Builder(
-              builder: (context) => Text(context.loc.font),
-            ),
+            home: Builder(builder: (context) => Text(context.loc.font)),
           ),
         );
 
         final exception = tester.takeException();
 
         expect(exception, isNotNull);
-        expect(
-          exception,
-          isA<MissingFlutterQuillLocalizationException>(),
-        );
+        expect(exception, isA<MissingFlutterQuillLocalizationException>());
       },
     );
   });

@@ -38,7 +38,7 @@ const List<int> arabianRomanNumbers = [
   9,
   5,
   4,
-  1
+  1,
 ];
 
 const List<String> romanNumbers = [
@@ -54,7 +54,7 @@ const List<String> romanNumbers = [
   'IX',
   'V',
   'IV',
-  'I'
+  'I',
 ];
 
 class EditableTextBlock extends StatelessWidget {
@@ -85,7 +85,9 @@ class EditableTextBlock extends StatelessWidget {
     this.onLaunchUrl,
     this.customStyleBuilder,
     this.customLinkPrefixes = const <String>[],
+    this.transformLink,
     this.customLeadingBlockBuilder,
+    this.showCodeBlockLineNumbers = true,
     super.key,
   });
 
@@ -99,6 +101,7 @@ class EditableTextBlock extends StatelessWidget {
   final Color color;
   final DefaultStyles? styles;
   final LeadingBlockNodeBuilder? customLeadingBlockBuilder;
+  final bool showCodeBlockLineNumbers;
   final bool enableInteractiveSelection;
   final bool hasFocus;
   final EdgeInsets? contentPadding;
@@ -115,6 +118,7 @@ class EditableTextBlock extends StatelessWidget {
   final bool readOnly;
   final bool? checkBoxReadOnly;
   final List<String> customLinkPrefixes;
+  final String Function(String link)? transformLink;
   final TextRange composingRange;
 
   @override
@@ -131,16 +135,14 @@ class EditableTextBlock extends StatelessWidget {
       decoration:
           _getDecorationForBlock(block, defaultStyles) ?? const BoxDecoration(),
       contentPadding: contentPadding,
-      children: _buildChildren(
-        context,
-        indentLevelCounts,
-        clearIndents,
-      ),
+      children: _buildChildren(context, indentLevelCounts, clearIndents),
     );
   }
 
   BoxDecoration? _getDecorationForBlock(
-      Block node, DefaultStyles? defaultStyles) {
+    Block node,
+    DefaultStyles? defaultStyles,
+  ) {
     final attrs = block.style.attributes;
     if (attrs.containsKey(Attribute.blockQuote.key)) {
       // Verify if the direction is RTL and avoid passing the decoration
@@ -160,17 +162,22 @@ class EditableTextBlock extends StatelessWidget {
     return null;
   }
 
-  List<Widget> _buildChildren(BuildContext context,
-      Map<int, int> indentLevelCounts, bool clearIndents) {
+  List<Widget> _buildChildren(
+    BuildContext context,
+    Map<int, int> indentLevelCounts,
+    bool clearIndents,
+  ) {
     final defaultStyles = QuillStyles.getStyles(context, false);
     final numberPointWidthBuilder =
         defaultStyles?.lists?.numberPointWidthBuilder ??
-            TextBlockUtils.defaultNumberPointWidthBuilder;
-    final indentWidthBuilder = defaultStyles?.lists?.indentWidthBuilder ??
+        TextBlockUtils.defaultNumberPointWidthBuilder;
+    final indentWidthBuilder =
+        defaultStyles?.lists?.indentWidthBuilder ??
         TextBlockUtils.defaultIndentWidthBuilder;
 
-    final lines = Iterable.castFrom<dynamic, Line>(block.children)
-        .toList(growable: false);
+    final lines = Iterable.castFrom<dynamic, Line>(
+      block.children,
+    ).toList(growable: false);
     final count = lines.length;
     final children = <Widget>[];
     if (clearIndents) {
@@ -187,42 +194,47 @@ class EditableTextBlock extends StatelessWidget {
     var index = 0;
     for (final line in lines) {
       index++;
+      final leading = _buildLeading(
+        context: context,
+        line: line,
+        index: index,
+        indentLevelCounts: indentLevelCounts,
+        count: count,
+        width: lineHorizontalSpacing.left,
+      );
       final editableTextLine = EditableTextLine(
-          line,
-          _buildLeading(
-            context: context,
-            line: line,
-            index: index,
-            indentLevelCounts: indentLevelCounts,
-            count: count,
-            width: lineHorizontalSpacing.left,
-          ),
-          TextLine(
-            line: line,
-            textDirection: textDirection,
-            embedBuilder: embedBuilder,
-            textSpanBuilder: textSpanBuilder,
-            customStyleBuilder: customStyleBuilder,
-            styles: styles!,
-            readOnly: readOnly,
-            controller: controller,
-            linkActionPicker: linkActionPicker,
-            onLaunchUrl: onLaunchUrl,
-            customLinkPrefixes: customLinkPrefixes,
-            customRecognizerBuilder: customRecognizerBuilder,
-            composingRange: composingRange,
-          ),
-          lineHorizontalSpacing,
-          _getSpacingForLine(line, index, count, defaultStyles),
-          textDirection,
-          textSelection,
-          color,
-          enableInteractiveSelection,
-          hasFocus,
-          MediaQuery.devicePixelRatioOf(context),
-          cursorCont,
-          styles!.inlineCode!,
-          null);
+        line,
+        leading != null
+            ? Directionality(textDirection: textDirection, child: leading)
+            : null,
+        TextLine(
+          line: line,
+          textDirection: textDirection,
+          embedBuilder: embedBuilder,
+          textSpanBuilder: textSpanBuilder,
+          customStyleBuilder: customStyleBuilder,
+          styles: styles!,
+          readOnly: readOnly,
+          controller: controller,
+          linkActionPicker: linkActionPicker,
+          onLaunchUrl: onLaunchUrl,
+          customLinkPrefixes: customLinkPrefixes,
+          transformLink: transformLink,
+          customRecognizerBuilder: customRecognizerBuilder,
+          composingRange: composingRange,
+        ),
+        lineHorizontalSpacing,
+        _getSpacingForLine(line, index, count, defaultStyles),
+        textDirection,
+        textSelection,
+        color,
+        enableInteractiveSelection,
+        hasFocus,
+        MediaQuery.devicePixelRatioOf(context),
+        cursorCont,
+        styles!.inlineCode!,
+        null,
+      );
       final nodeTextDirection = getDirectionOfNode(line, textDirection);
       children.add(
         Directionality(
@@ -242,8 +254,19 @@ class EditableTextBlock extends StatelessWidget {
     required LeadingBlockIndentWidth indentWidthBuilder,
     required LeadingBlockNumberPointWidth numberPointWidthBuilder,
   }) {
-    final horizontalSpacing =
-        indentWidthBuilder(block, context, count, numberPointWidthBuilder);
+    final horizontalSpacing = indentWidthBuilder(
+      block,
+      context,
+      count,
+      numberPointWidthBuilder,
+    );
+    if (block.style.attributes.containsKey(Attribute.codeBlock.key) &&
+        !showCodeBlockLineNumbers) {
+      return HorizontalSpacing(
+        horizontalSpacing.right,
+        horizontalSpacing.right,
+      );
+    }
     final measuredWidth = _measureNumberPointWidth(
       context: context,
       lines: lines,
@@ -338,7 +361,7 @@ class EditableTextBlock extends StatelessWidget {
     final attrs = line.style.attributes;
     final numberPointWidthBuilder =
         defaultStyles.lists?.numberPointWidthBuilder ??
-            TextBlockUtils.defaultNumberPointWidthBuilder;
+        TextBlockUtils.defaultNumberPointWidthBuilder;
 
     // Of the alignment buttons
     // final textAlign = line.style.attributes[Attribute.align.key]?.value != null
@@ -378,8 +401,11 @@ class EditableTextBlock extends StatelessWidget {
         return _getCodeBlockLeadingStyle(defaultStyles);
       }(),
       width: () {
-        if (isOrdered || isCodeBlock) {
+        if (isOrdered) {
           return width;
+        }
+        if (isCodeBlock) {
+          return width - fontSize / 4;
         }
         if (isUnordered) {
           return numberPointWidthBuilder(fontSize, 1); // same as fontSize * 2
@@ -387,11 +413,8 @@ class EditableTextBlock extends StatelessWidget {
         return null;
       }(),
       padding: () {
-        if (isOrdered || isUnordered) {
+        if (isOrdered || isUnordered || isCodeBlock) {
           return fontSize / 2;
-        }
-        if (isCodeBlock) {
-          return fontSize;
         }
         return null;
       }(),
@@ -424,6 +447,7 @@ class EditableTextBlock extends StatelessWidget {
       return checkboxLeading(leadingConfig);
     }
     if (isCodeBlock) {
+      if (!showCodeBlockLineNumbers) return null;
       return codeBlockLineNumberLeading(leadingConfig);
     }
     return null;
@@ -443,17 +467,18 @@ class EditableTextBlock extends StatelessWidget {
   }
 
   Color? _getLineFontColor(Line line) {
-    final color = line
-        .toDelta()
-        .operations
-        .first
-        .attributes?[Attribute.color.key] as String?;
+    final color =
+        line.toDelta().operations.first.attributes?[Attribute.color.key]
+            as String?;
     return color == null ? null : hexToColor(color);
   }
 
   double? _getLineFontSize(Line line, DefaultStyles defaultStyles) {
-    final size =
-        line.toDelta().operations.first.attributes?[Attribute.size.key];
+    final size = line
+        .toDelta()
+        .operations
+        .first
+        .attributes?[Attribute.size.key];
     return size == null
         ? null
         : getFontSizeAsDouble(size, defaultStyles: defaultStyles);
@@ -553,17 +578,13 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     required super.textDirection,
     required EdgeInsetsGeometry padding,
     required super.scrollBottomInset,
-    required Decoration decoration,
+    required this._decoration,
     super.children,
     EdgeInsets contentPadding = EdgeInsets.zero,
-  })  : _decoration = decoration,
-        _configuration = ImageConfiguration(textDirection: textDirection),
-        _savedPadding = padding,
-        _contentPadding = contentPadding,
-        super(
-          container: block,
-          padding: padding.add(contentPadding),
-        );
+  }) : _configuration = ImageConfiguration(textDirection: textDirection),
+       _savedPadding = padding,
+       _contentPadding = contentPadding,
+       super(container: block, padding: padding.add(contentPadding));
 
   EdgeInsetsGeometry _savedPadding;
   EdgeInsets _contentPadding;
@@ -605,10 +626,12 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
   @override
   TextRange getLineBoundary(TextPosition position) {
     final child = childAtPosition(position);
-    final rangeInChild = child.getLineBoundary(TextPosition(
-      offset: position.offset - child.container.offset,
-      affinity: position.affinity,
-    ));
+    final rangeInChild = child.getLineBoundary(
+      TextPosition(
+        offset: position.offset - child.container.offset,
+        affinity: position.affinity,
+      ),
+    );
     return TextRange(
       start: rangeInChild.start + child.container.offset,
       end: rangeInChild.end + child.container.offset,
@@ -618,10 +641,12 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
   @override
   Offset getOffsetForCaret(TextPosition position) {
     final child = childAtPosition(position);
-    return child.getOffsetForCaret(TextPosition(
-          offset: position.offset - child.container.offset,
-          affinity: position.affinity,
-        )) +
+    return child.getOffsetForCaret(
+          TextPosition(
+            offset: position.offset - child.container.offset,
+            affinity: position.affinity,
+          ),
+        ) +
         (child.parentData as BoxParentData).offset;
   }
 
@@ -629,8 +654,9 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
   TextPosition getPositionForOffset(Offset offset) {
     final child = childAtOffset(offset);
     final parentData = child.parentData as BoxParentData;
-    final localPosition =
-        child.getPositionForOffset(offset - parentData.offset);
+    final localPosition = child.getPositionForOffset(
+      offset - parentData.offset,
+    );
     return TextPosition(
       offset: localPosition.offset + child.container.offset,
       affinity: localPosition.affinity,
@@ -641,8 +667,9 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
   TextRange getWordBoundary(TextPosition position) {
     final child = childAtPosition(position);
     final nodeOffset = child.container.offset;
-    final childWord = child
-        .getWordBoundary(TextPosition(offset: position.offset - nodeOffset));
+    final childWord = child.getWordBoundary(
+      TextPosition(offset: position.offset - nodeOffset),
+    );
     return TextRange(
       start: childWord.start + nodeOffset,
       end: childWord.end + nodeOffset,
@@ -654,8 +681,9 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     assert(position.offset < container.length);
 
     final child = childAtPosition(position);
-    final childLocalPosition =
-        TextPosition(offset: position.offset - child.container.offset);
+    final childLocalPosition = TextPosition(
+      offset: position.offset - child.container.offset,
+    );
     final result = child.getPositionAbove(childLocalPosition);
     if (result != null) {
       return TextPosition(offset: result.offset + child.container.offset);
@@ -671,8 +699,10 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     final testOffset = sibling.getOffsetForCaret(testPosition);
     final finalOffset = Offset(caretOffset.dx, testOffset.dy);
     return TextPosition(
-        offset: sibling.container.offset +
-            sibling.getPositionForOffset(finalOffset).offset);
+      offset:
+          sibling.container.offset +
+          sibling.getPositionForOffset(finalOffset).offset,
+    );
   }
 
   @override
@@ -680,8 +710,9 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     assert(position.offset < container.length);
 
     final child = childAtPosition(position);
-    final childLocalPosition =
-        TextPosition(offset: position.offset - child.container.offset);
+    final childLocalPosition = TextPosition(
+      offset: position.offset - child.container.offset,
+    );
     final result = child.getPositionBelow(childLocalPosition);
     if (result != null) {
       return TextPosition(offset: result.offset + child.container.offset);
@@ -696,15 +727,18 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     final testOffset = sibling.getOffsetForCaret(const TextPosition(offset: 0));
     final finalOffset = Offset(caretOffset.dx, testOffset.dy);
     return TextPosition(
-        offset: sibling.container.offset +
-            sibling.getPositionForOffset(finalOffset).offset);
+      offset:
+          sibling.container.offset +
+          sibling.getPositionForOffset(finalOffset).offset,
+    );
   }
 
   @override
   double preferredLineHeight(TextPosition position) {
     final child = childAtPosition(position);
     return child.preferredLineHeight(
-        TextPosition(offset: position.offset - child.container.offset));
+      TextPosition(offset: position.offset - child.container.offset),
+    );
   }
 
   @override
@@ -717,12 +751,7 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
       );
     }
 
-    final baseNode = container
-        .queryChild(
-          selection.start,
-          false,
-        )
-        .node;
+    final baseNode = container.queryChild(selection.start, false).node;
     var baseChild = firstChild;
     while (baseChild != null) {
       if (baseChild.container == baseNode) {
@@ -733,11 +762,7 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     assert(baseChild != null);
 
     final basePoint = baseChild!.getBaseEndpointForSelection(
-      localSelection(
-        baseChild.container,
-        selection,
-        true,
-      ),
+      localSelection(baseChild.container, selection, true),
     );
     return TextSelectionPoint(
       basePoint.point + (baseChild.parentData as BoxParentData).offset,
@@ -767,11 +792,7 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
     assert(extentChild != null);
 
     final extentPoint = extentChild!.getExtentEndpointForSelection(
-      localSelection(
-        extentChild.container,
-        selection,
-        true,
-      ),
+      localSelection(extentChild.container, selection, true),
     );
     return TextSelectionPoint(
       extentPoint.point + (extentChild.parentData as BoxParentData).offset,
@@ -798,12 +819,15 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
 
     final decorationPadding = resolvedPadding! - _contentPadding;
 
-    final filledConfiguration =
-        configuration.copyWith(size: decorationPadding.deflateSize(size));
+    final filledConfiguration = configuration.copyWith(
+      size: decorationPadding.deflateSize(size),
+    );
     final debugSaveCount = context.canvas.getSaveCount();
 
-    final decorationOffset =
-        offset.translate(decorationPadding.left, decorationPadding.top);
+    final decorationOffset = offset.translate(
+      decorationPadding.left,
+      decorationPadding.top,
+    );
     _painter!.paint(context.canvas, decorationOffset, filledConfiguration);
     if (debugSaveCount != context.canvas.getSaveCount()) {
       throw StateError(
@@ -834,8 +858,10 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
 
   @override
   TextPosition globalToLocalPosition(TextPosition position) {
-    assert(container.containsOffset(position.offset) || container.length == 0,
-        'The provided text position is not in the current node');
+    assert(
+      container.containsOffset(position.offset) || container.length == 0,
+      'The provided text position is not in the current node',
+    );
     return TextPosition(
       offset: position.offset - container.documentOffset,
       affinity: position.affinity,
@@ -854,15 +880,16 @@ class RenderEditableTextBlock extends RenderEditableContainerBox
 }
 
 class _EditableBlock extends MultiChildRenderObjectWidget {
-  const _EditableBlock(
-      {required this.block,
-      required this.textDirection,
-      required this.horizontalSpacing,
-      required this.verticalSpacing,
-      required this.scrollBottomInset,
-      required this.decoration,
-      required this.contentPadding,
-      required super.children});
+  const _EditableBlock({
+    required this.block,
+    required this.textDirection,
+    required this.horizontalSpacing,
+    required this.verticalSpacing,
+    required this.scrollBottomInset,
+    required this.decoration,
+    required this.contentPadding,
+    required super.children,
+  });
 
   final Block block;
   final TextDirection textDirection;
@@ -873,10 +900,11 @@ class _EditableBlock extends MultiChildRenderObjectWidget {
   final EdgeInsets? contentPadding;
 
   EdgeInsets get _padding => EdgeInsets.only(
-      left: horizontalSpacing.left,
-      right: horizontalSpacing.right,
-      top: verticalSpacing.top,
-      bottom: verticalSpacing.bottom);
+    left: horizontalSpacing.left,
+    right: horizontalSpacing.right,
+    top: verticalSpacing.top,
+    bottom: verticalSpacing.bottom,
+  );
 
   EdgeInsets get _contentPadding => contentPadding ?? EdgeInsets.zero;
 
@@ -894,7 +922,9 @@ class _EditableBlock extends MultiChildRenderObjectWidget {
 
   @override
   void updateRenderObject(
-      BuildContext context, covariant RenderEditableTextBlock renderObject) {
+    BuildContext context,
+    covariant RenderEditableTextBlock renderObject,
+  ) {
     renderObject
       ..setContainer(block)
       ..textDirection = textDirection

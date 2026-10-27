@@ -95,18 +95,6 @@
     "saveImagePermissionDenied"
   ],
 
-  "en_US": [
-    "insertVideo",
-    "errorUnexpectedSavingImage",
-    "successImageSavedGallery",
-    "successImageSaved",
-    "successImageDownloaded",
-    "openGallery",
-    "openFileLocation",
-    "openFile",
-    "saveImagePermissionDenied"
-  ],
-
   "es": [
     "insertVideo",
     "errorUnexpectedSavingImage",
@@ -334,18 +322,6 @@
     "saveImagePermissionDenied"
   ],
 
-  "pt_BR": [
-    "insertVideo",
-    "errorUnexpectedSavingImage",
-    "successImageSavedGallery",
-    "successImageSaved",
-    "successImageDownloaded",
-    "openGallery",
-    "openFileLocation",
-    "openFile",
-    "saveImagePermissionDenied"
-  ],
-
   "ro": [
     "insertVideo",
     "errorUnexpectedSavingImage",
@@ -527,6 +503,18 @@
   ],
 
   "zh_HK": [
+    "insertVideo",
+    "errorUnexpectedSavingImage",
+    "successImageSavedGallery",
+    "successImageSaved",
+    "successImageDownloaded",
+    "openGallery",
+    "openFileLocation",
+    "openFile",
+    "saveImagePermissionDenied"
+  ],
+
+  "zh_TW": [
     "insertVideo",
     "errorUnexpectedSavingImage",
     "successImageSavedGallery",

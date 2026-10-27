@@ -1,4 +1,4 @@
-/// @docImport '../../../rules/insert.dart' show AutoFormatMultipleLinksRule;
+/// @docImport '../../../rules/insert.dart';
 library;
 
 import '../../../common/utils/link_validator.dart';
@@ -15,9 +15,12 @@ class QuillToolbarLinkStyleButtonExtraOptions
   });
 }
 
-class QuillToolbarLinkStyleButtonOptions extends QuillToolbarBaseButtonOptions<
-    QuillToolbarLinkStyleButtonOptions,
-    QuillToolbarLinkStyleButtonExtraOptions> {
+class QuillToolbarLinkStyleButtonOptions
+    extends
+        QuillToolbarBaseButtonOptions<
+          QuillToolbarLinkStyleButtonOptions,
+          QuillToolbarLinkStyleButtonExtraOptions
+        > {
   const QuillToolbarLinkStyleButtonOptions({
     this.dialogTheme,
     this.linkRegExp,
