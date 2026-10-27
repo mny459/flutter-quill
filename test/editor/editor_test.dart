@@ -3,6 +3,7 @@ import 'dart:convert' show jsonDecode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/src/editor/widgets/text/text_line.dart';
 import 'package:flutter_quill/src/l10n/extensions/localizations_ext.dart';
 import 'package:flutter_quill_test/flutter_quill_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,6 +88,101 @@ void main() {
       }
       expect(error, isNull);
       expect(latestUri, equals(uri));
+    });
+
+    testWidgets('ordered list leading width fits large markers', (
+      tester,
+    ) async {
+      const markerFontSize = 42.0;
+      const markerPadding = markerFontSize / 2;
+      controller.dispose();
+      controller = QuillController(
+        document: Document.fromJson([
+          {
+            'insert': 'Large item',
+            'attributes': {'size': markerFontSize},
+          },
+          {
+            'insert': '\n',
+            'attributes': {'list': 'ordered'},
+          },
+        ]),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SizedBox(
+            width: 400,
+            child: QuillEditor.basic(
+              controller: controller,
+              config: const QuillEditorConfig(),
+            ),
+          ),
+        ),
+      );
+
+      final markerFinder = find.text('1.');
+      expect(markerFinder, findsOneWidget);
+
+      final marker = tester.widget<Text>(markerFinder);
+      expect(marker.maxLines, 1);
+      expect(marker.softWrap, isFalse);
+      expect(marker.overflow, TextOverflow.visible);
+
+      final markerPainter = TextPainter(
+        maxLines: 1,
+        text: TextSpan(text: '1.', style: marker.style),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      final markerContainerFinder = find.byWidgetPredicate((widget) {
+        return widget is Container &&
+            widget.child is Text &&
+            (widget.child! as Text).data == '1.';
+      });
+      final markerContainerWidth = tester.getSize(markerContainerFinder).width;
+
+      expect(
+        markerContainerWidth,
+        greaterThanOrEqualTo(
+          markerPainter.width.ceilToDouble() + markerPadding,
+        ),
+      );
+    });
+
+    testWidgets('hiding code block line numbers removes their gutter', (
+      tester,
+    ) async {
+      controller.dispose();
+      controller = QuillController(
+        document: Document.fromJson([
+          {'insert': 'Code'},
+          {
+            'insert': '\n',
+            'attributes': {'code-block': true},
+          },
+        ]),
+        selection: const TextSelection.collapsed(offset: 0),
+      );
+
+      Future<double> textLeft({required bool showLineNumbers}) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: QuillEditor.basic(
+              controller: controller,
+              config: QuillEditorConfig(
+                showCodeBlockLineNumbers: showLineNumbers,
+              ),
+            ),
+          ),
+        );
+        return tester.getTopLeft(find.byType(TextLine)).dx;
+      }
+
+      final withLineNumbers = await textLeft(showLineNumbers: true);
+      final withoutLineNumbers = await textLeft(showLineNumbers: false);
+
+      expect(withoutLineNumbers, lessThan(withLineNumbers));
     });
 
     Widget customBuilder(BuildContext context, QuillRawEditorState state) {

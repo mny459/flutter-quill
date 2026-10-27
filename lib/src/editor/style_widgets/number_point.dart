@@ -37,6 +37,9 @@ class QuillNumberPoint extends StatelessWidget {
         color: backgroundColor,
         child: Text(
           withDot ? '$index.' : index,
+          maxLines: 1,
+          overflow: TextOverflow.visible,
+          softWrap: false,
           style: style,
           textAlign: textAlign,
         ),
@@ -49,6 +52,9 @@ class QuillNumberPoint extends StatelessWidget {
       color: backgroundColor,
       child: Text(
         withDot ? '$index.' : index,
+        maxLines: 1,
+        overflow: TextOverflow.visible,
+        softWrap: false,
         style: style,
         textAlign: textAlign,
       ),
